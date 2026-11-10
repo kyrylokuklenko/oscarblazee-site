@@ -871,6 +871,7 @@ html.fl .cover-in,html.fl #cta{opacity:0}
       else { f.__t=ts; f(ts) } }) };
 })();
 </script>
+<script>/* ?debug: collect errors for the diagnostics box */ if(/[?&]debug/.test(location.search)){ window.__obErr=[]; addEventListener('error',function(e){ __obErr.push((e.message||'error')+(e.lineno?' @'+e.lineno:'')) }); addEventListener('unhandledrejection',function(e){ __obErr.push('promise: '+(e.reason&&e.reason.message||e.reason)) }) }</script>
 <script>
 (function(){
   /* ==========================================================
@@ -3363,5 +3364,17 @@ html.fl .cover-in,html.fl #cta{opacity:0}
 
 
 <script>(function(){ if(window.OBwear) OBwear('.in-go',{w:[600,800,900,900],scr:.55,chip:.3,up:.3,dbl:.1}) })();</script>
+<script>/* diagnostics box, only at oscarblazee.com/?debug — shows which sound engine plays and how smooth the page runs */
+(function(){ if(!/[?&]debug/.test(location.search)) return;
+  var b=document.createElement('div'); b.style.cssText='position:fixed;left:6px;bottom:6px;z-index:2147483647;background:rgba(0,0,0,.85);color:#7f7;font:11px/1.35 ui-monospace,Menlo,monospace;padding:6px 8px;border-radius:6px;max-width:94vw;white-space:pre-wrap;pointer-events:none';
+  document.body.appendChild(b); var fr=0, t0=performance.now(), fps=0, worst=0, last=t0;
+  (function f(){ var n=performance.now(); worst=Math.max(worst,n-last); last=n; fr++; requestAnimationFrame(f) })();
+  setInterval(function(){ var n=performance.now(); fps=Math.round(fr*1000/(n-t0)); fr=0; t0=n;
+    var d={}; try{ d=window.OBdbg?OBdbg():{} }catch(e){}
+    var ios=(navigator.userAgent.match(/OS (\d+)_(\d+)/)||[]).slice(1).join('.');
+    b.textContent='engine: '+(window.OBengine?OBengine():'?')+'\nsound: '+(d.ac||'?')+' · playing: '+(d.playing?'yes':'no')+' · pos: '+Math.round(d.pos||0)+
+      '\npage: '+fps+' fps · slowest frame '+Math.round(worst)+' ms'+(ios?'\niOS '+ios:'')+
+      ((window.__obErr&&__obErr.length)?'\nerrors: '+__obErr.slice(-3).join(' | '):''); worst=0 },1000) })();
+</script>
 </body>
 </html>
