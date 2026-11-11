@@ -17,9 +17,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --global vercel@48
-      - name: Check token
-        run: |
-          vercel whoami --token=${{ secrets.VERCEL_TOKEN }}
-          vercel project ls --scope ${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }}
+      - run: npm install --global vercel@latest
       - run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
