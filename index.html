@@ -3495,5 +3495,15 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
     (function next(){ if(i<gs.length){ one(gs[i++]); setTimeout(next,40) } else if(window.__obMark) __obMark('knobs drawn') })() }
   setTimeout(all,1500); setTimeout(all,5000) })();
 </script>
+<script>/* deploy check: a red dot next to the name on page 1 — if you see it, the newest version is live (remove this block when done) */
+(function(){ var nm=document.querySelector('.cimg .cname'), box=document.getElementById('cimg'); if(!nm||!box) return;
+  var d=document.createElement('i'); d.id='deployDot'; d.setAttribute('aria-hidden','true');
+  d.style.cssText='position:absolute;width:14px;height:14px;border-radius:50%;background:#e10600;pointer-events:none;z-index:5';
+  box.appendChild(d);
+  function place(){ var b=box.getBoundingClientRect(), r=nm.getBoundingClientRect(), sc=b.width/(box.offsetWidth||1)||1;
+    d.style.left=((r.right-b.left)/sc+10)+'px'; d.style.top=((r.top-b.top+r.height/2)/sc-7)+'px' }
+  place(); addEventListener('resize',place); addEventListener('load',function(){ setTimeout(place,200) }); setTimeout(place,1500);
+  try{ document.fonts.ready.then(place) }catch(e){} })();
+</script>
 </body>
 </html>
