@@ -550,11 +550,12 @@ html:not(.scaled) #g3a>.grp-h,html:not(.scaled) #g3b>.grp-h{padding-left:6px}
 html.fl .cover-in,html.fl #cta{opacity:0}
 .cover-in,#cta{transition:opacity .3s}
 </style>
-<script>/* phones: mark the page so the worn-type headings get their own layers (see the style below) */
+<script>/* phones: mark the page, so the worn type is baked into pictures once and never re-filtered live (see below) */
 (function(){ try{ if((window.matchMedia&&matchMedia('(pointer:coarse)').matches)&&!/[?&]fx=full/.test(location.search)) document.documentElement.classList.add('ph') }catch(e){} })();</script>
-<style>/* phones: each worn-type heading sits in its own layer, so Safari renders its filter once and then only moves the finished picture */
-html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .over .h1,html.ph .over a,html.ph .stamp,html.ph .soft,html.ph .clinks a,html.ph .cover .cta,html.ph .in-lead,html.ph .in-pics figcaption,html.ph .kp-cap>span,html.ph .dia-cap{will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden}</style>
+<style>/* phones: once a heading is baked into a picture, its live filter is switched off (the picture already carries the look) */
+html.ph.ph.ph.ph.ph.ph .baked{filter:none!important}</style>
 <style>.in-pics.off *,.in-pics.off{animation-play-state:paused!important}</style>
+<style>html.dbgfx.dbgfx.dbgfx.dbgfx.dbgfx.dbgfx *{filter:none!important;-webkit-mask-image:none!important;mask-image:none!important;will-change:auto!important}</style>
 </head>
 <body>
 <script>(function(){var h=document.documentElement;h.classList.add('fl');function go(){h.classList.remove('fl')}var t0=Date.now();(function q(){var ok=false;try{document.fonts.forEach(function(f){if(/Archivo/.test(f.family)&&f.status==='loaded')ok=true})}catch(e){ok=true}if(ok||Date.now()-t0>1200)go();else setTimeout(q,40)})()})();</script>
@@ -875,6 +876,12 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
       else if(PHONE&&f.__t&&ts-f.__t<(f.__fast?30:45)) rAF(function(t2){ f.__t=t2; f(t2) });   /* phones: the main loop every other frame, the separate diagrams every third (20 per second) */
       else { f.__t=ts; f(ts) } }) };
 })();
+</script>
+<script>/* ?debug: measure how much time the page's own code takes, and let the self-test pause the diagrams */
+if(/[?&]debug/.test(location.search)){ window.__obJS=0;
+  var raf0=window.requestAnimationFrame.bind(window), W8=new WeakMap();
+  window.requestAnimationFrame=function(f){ var w=W8.get(f); if(!w){ w=function(ts){ if(window.__obNoDraw&&!f.__fast&&!f.__dbg){ window.requestAnimationFrame(f); return } var t=performance.now(); try{ f(ts) }finally{ __obJS+=performance.now()-t } }; W8.set(f,w) } return raf0(w) };
+  ['setInterval','setTimeout'].forEach(function(k){ var o=window[k].bind(window); window[k]=function(fn,ms){ var a=[].slice.call(arguments,2); if(typeof fn!=='function') return o.apply(window,arguments); return o(function(){ var t=performance.now(); try{ fn.apply(this,a) }finally{ __obJS+=performance.now()-t } },ms) } }) }
 </script>
 <script>/* ?debug: collect errors for the diagnostics box */ if(/[?&]debug/.test(location.search)){ window.__obErr=[]; addEventListener('error',function(e){ __obErr.push((e.message||'error')+(e.lineno?' @'+e.lineno:'')) }); addEventListener('unhandledrejection',function(e){ __obErr.push('promise: '+(e.reason&&e.reason.message||e.reason)) }) }</script>
 <script>
@@ -3016,7 +3023,7 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
   if('IntersectionObserver' in window) new IntersectionObserver(function(es){ if(es.some(function(e){return e.isIntersecting})) PRIMEOK=true },{rootMargin:'35% 0px 35% 0px'}).observe(winEl); else PRIMEOK=true; function loopBody(){ LOOPT=performance.now(); window.OBloops=(window.OBloops||0)+1; if(window.OBscroll&&OBscroll()){ try{pump()}catch(e){rendering=false} return } var lpA=lastProcPos;
     try{pump()}catch(e){rendering=false} try{simulate()}catch(e){} try{fxUpdate()}catch(e){} try{ tapPoll(); if(p2vis||p3x) livePoll() }catch(e){} fr2=!fr2; FR3=(FR3+1)%3; var prim=!started&&ready&&PRIME>0&&PRIMEOK&&lastProcPos!==PRLP&&PRIMEF<40; if(prim){ var sv=[p2vis,p3m,p3x]; p2vis=p3m=p3x=true; try{draw()}catch(e){} p2vis=sv[0]; p3m=sv[1]; p3x=sv[2]; PRLP=lastProcPos; PRIME--; PRIMEF++; return }
     if(!started&&PRIME<=0) return; /* frozen preview: the canvases keep their last picture */
-    if((p2vis||p3m||p3x)&&(LOWMEM?FR3===0:(DRT<7||fr2))){ var t0=performance.now(); try{draw()}catch(e){} DRT=DRT*.92+(performance.now()-t0)*.08 } }
+    if((p2vis||p3m||p3x)&&!window.__obNoDraw&&(LOWMEM?FR3===0:(DRT<7||fr2))){ var t0=performance.now(); try{draw()}catch(e){} DRT=DRT*.92+(performance.now()-t0)*.08 } }
   var RAFT=0; (function(){ var f=function loop(){ requestAnimationFrame(f); RAFT=performance.now(); loopBody() }; f.__fast=true; f() })();
   /* some embedded browsers hold back animation frames until the first tap: keep drawing anyway */
   /* iPhone Safari sometimes stops animation frames altogether: then a timer drives the pictures and the music generator instead */
@@ -3313,18 +3320,21 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
 <script>
 (function(){
   var SEL=[['.cimg .cname',3],['.cimg .clinks a',1],['.cover .cta .t',1],['.in-lead',2],['.intro .tr-row .nm',2],['.intro .in-modes>.tr-list>li>.tr-row .meta',1],['.tr-h',1],['.in-pics figcaption',1]];
+  var PH=document.documentElement.classList.contains('ph');
+  /* phones: also bake the track names in every list and the small captions under the diagrams (but not the ones whose words change) */
+  if(PH) SEL=SEL.concat([['.tr-row .nm',2],['.tr-row .meta',1],['.grp-h',1],['.in-go',1],['.kp-cap>span:not(#diaCap)',1]]);
   var MAP={g:'--mG',dim:'--mD',faint:'--mF',worn:'--mW',jB:'--mJB',jL:'--mJL',jT:'--mJT',s1:'--mS1',s2:'--mS2',s3:'--mS3',c1:'--mC1',c2:'--mC2'}, IM={}, busy=false;
   function loadMasks(cb){ var rs=getComputedStyle(document.documentElement), ks=Object.keys(MAP), n=ks.length;
     ks.forEach(function(k){ var v=rs.getPropertyValue(MAP[k]).trim(), m=v.match(/url\(["']?(.*?)["']?\)$/); if(!m){ if(--n===0) cb(); return } var im=new Image(); im.onload=im.onerror=function(){ IM[k]=im; if(--n===0) cb() }; im.src=m[1] }) }
   var seed=11; function rnd(){ seed=(seed*16807)%2147483647; return (seed-1)/2147483646 }
   function bake(el,lvl){ var old=el.querySelector(':scope>canvas.bk'); if(old) old.remove(); el.classList.remove('baked');
-    var r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return; var cs=getComputedStyle(el), fs=parseFloat(cs.fontSize)||16, pad=Math.ceil(fs*.35), d=Math.min(2,devicePixelRatio||1), W=Math.ceil(r.width+pad*2), H=Math.ceil(r.height+pad*2);
+    var r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return; var cs=getComputedStyle(el), F0=cs.filter, CTA=PH&&(!F0||F0==='none')&&el.closest('.cta'); if(CTA){ F0=getComputedStyle(CTA).filter } var fs=parseFloat(cs.fontSize)||16, pad=Math.ceil(fs*.35), d=Math.min(2,devicePixelRatio||1), W=Math.ceil(r.width+pad*2), H=Math.ceil(r.height+pad*2);
     var c=document.createElement('canvas'); c.className='bk'; c.width=Math.ceil(W*d); c.height=Math.ceil(H*d); c.style.left=(-pad)+'px'; c.style.top=(-pad)+'px'; c.style.width=W+'px'; c.style.height=H+'px';
     var g=c.getContext('2d'); g.setTransform(d,0,0,d,0,0); var col=cs.color&&cs.color!=='transparent'?cs.color:'#000';
     var spans=el.querySelectorAll('.lt'); if(!spans.length) return;
     var t=document.createElement('canvas'), tg=t.getContext('2d'), MK=document.createElement('canvas'), mg=MK.getContext('2d');
     spans.forEach(function(sp){ var b=sp.getBoundingClientRect(); if(b.width<.5) return; var ss=getComputedStyle(sp), f=parseFloat(ss.fontSize)||fs, ch=sp.textContent; if(ss.textTransform==='uppercase') ch=ch.toUpperCase();
-      var font=ss.fontWeight+' '+f+'px '+ss.fontFamily, bw=Math.ceil(b.width+f*.4), bh=Math.ceil(b.height+f*.2); t.width=Math.ceil(bw*d); t.height=Math.ceil(bh*d); tg.setTransform(d,0,0,d,0,0);
+      var font=(ss.fontStyle&&ss.fontStyle!=='normal'?ss.fontStyle+' ':'')+ss.fontWeight+' '+f+'px '+ss.fontFamily, bw=Math.ceil(b.width+f*.4), bh=Math.ceil(b.height+f*.2); t.width=Math.ceil(bw*d); t.height=Math.ceil(bh*d); tg.setTransform(d,0,0,d,0,0);
       tg.font=font; tg.fillStyle=col; tg.textBaseline='alphabetic'; var asc=tg.measureText(ch).fontBoundingBoxAscent||f*.9, ox=f*.2, oy=(b.height-((tg.measureText(ch).fontBoundingBoxAscent||f*.9)+(tg.measureText(ch).fontBoundingBoxDescent||f*.22)))/2;
       tg.fillText(ch,ox,oy+asc+f*.1); if(sp.classList.contains('dbl')) tg.fillText(ch,ox+f*.035,oy+asc+f*.1);
       var k=null; for(var q in MAP) if(sp.classList.contains(q)){ k=q; break }
@@ -3342,8 +3352,18 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
       id.data.set(out); g.putImageData(id,0,0) }catch(e){}
     /* toner dragged sideways in a few bands */
     if(lvl>2){ g.setTransform(1,0,0,1,0,0); for(var i=0;i<3;i++){ var by=Math.floor(c.height*(.2+rnd()*.6)), bhh=Math.max(2,Math.floor(c.height*(.03+rnd()*.05))), dx=(4+rnd()*8)*d; g.globalAlpha=.22; for(var s2=1;s2<=3;s2++) g.drawImage(c,0,by,c.width,bhh,-dx*s2/3,by,c.width,bhh) } g.globalAlpha=1 }
-    el.insertBefore(c,el.firstChild); el.classList.add('baked') }
+    el.insertBefore(c,el.firstChild); el.classList.add('baked');
+    if(CTA&&F0&&F0!=='none') CTA.style.filter='none'; /* its filter now lives in the picture */
+    /* phones: the live filter that used to sit on top of the baked picture is run once, here, and burnt into it */
+    var fm=PH&&(F0||'').match(/url\(["']?#([\w-]+)["']?\)/), fe=fm&&document.getElementById(fm[1]);
+    if(fe){ try{ var NS='http://www.w3.org/2000/svg', src='<svg xmlns="'+NS+'" width="'+c.width+'" height="'+c.height+'" viewBox="0 0 '+W+' '+H+'"><defs>'+fe.outerHTML+'</defs><image href="'+c.toDataURL('image/png')+'" x="0" y="0" width="'+W+'" height="'+H+'" filter="url(#'+fm[1]+')"/></svg>', im=new Image();
+        im.onload=function(){ try{ var gg=c.getContext('2d'); gg.setTransform(1,0,0,1,0,0); gg.clearRect(0,0,c.width,c.height); gg.drawImage(im,0,0,c.width,c.height); c.dataset.burnt='1' }catch(e){ c.dataset.burnt='err' } }; im.onerror=function(){ c.dataset.burnt='load-error' };
+        im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src) }catch(e){} } }
   function all(){ if(busy) return; busy=true; seed=11; SEL.forEach(function(q){ document.querySelectorAll(q[0]).forEach(function(e){ if(e.querySelector('.lt')) try{ bake(e,q[1]) }catch(x){} }) }); busy=false }
+  /* text that was hidden (a closed list) gets baked the moment it shows up */
+  function more(){ if(busy||!Object.keys(IM).length) return; var need=false; SEL.forEach(function(q){ if(need) return; document.querySelectorAll(q[0]).forEach(function(e){ if(need||e.classList.contains('baked')||!e.querySelector('.lt')) return; var r=e.getBoundingClientRect(); if(r.width>=2&&r.height>=2) need=true }) });
+    if(need) all() /* bake everything again in the same order, so every word keeps exactly the same wear as on a computer */ }
+  if(PH){ var mt=0; addEventListener('click',function(){ clearTimeout(mt); mt=setTimeout(more,450) },true); setInterval(more,3000) }
   function go(){ loadMasks(all) }
   var ready=document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve();
   ready.then(function(){ if(document.readyState==='complete') setTimeout(go,60); else addEventListener('load',function(){ setTimeout(go,60) }) });
@@ -3389,22 +3409,49 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
 
 
 <script>(function(){ if(window.OBwear) OBwear('.in-go',{w:[600,800,900,900],scr:.55,chip:.3,up:.3,dbl:.1}) })();</script>
-<script>/* diagnostics box, only at oscarblazee.com/?debug — shows which sound engine plays and how smooth the page runs */
+<script>/* diagnostics box, only at oscarblazee.com/?debug — shows which sound engine plays, how busy the phone is, and runs a short self-test */
 (function(){ if(!/[?&]debug/.test(location.search)) return;
-  var b=document.createElement('div'); b.style.cssText='position:fixed;left:6px;bottom:6px;z-index:2147483647;background:rgba(0,0,0,.85);color:#7f7;font:11px/1.35 ui-monospace,Menlo,monospace;padding:6px 8px;border-radius:6px;max-width:94vw;white-space:pre-wrap;pointer-events:none';
-  document.body.appendChild(b); var fr=0, t0=performance.now(), fps=0, worst=0, last=t0;
-  (function f(){ var n=performance.now(); worst=Math.max(worst,n-last); last=n; fr++; requestAnimationFrame(f) })();
-  var lp0=0; setInterval(function(){ var n=performance.now(); fps=Math.round(fr*1000/(n-t0)); fr=0; t0=n;
+  var b=document.createElement('div'); b.style.cssText='position:fixed;left:6px;bottom:6px;z-index:2147483647;background:rgba(0,0,0,.88);color:#7f7;font:11px/1.35 ui-monospace,Menlo,monospace;padding:6px 8px;border-radius:6px;max-width:94vw;white-space:pre-wrap;pointer-events:none';
+  document.body.appendChild(b);
+  var fr=0, lp0=0, js0=0, lagS=0, lagN=0, lagMax=0;
+  var f=function(){ fr++; requestAnimationFrame(f) }; f.__dbg=true; f.__fast=true; f();
+  (function probe(){ var t=performance.now(); setTimeout(function(){ var d=performance.now()-t-100; if(d<0)d=0; lagS+=d; lagN++; if(d>lagMax)lagMax=d; probe() },100) })();
+  /* self-test: a few seconds each, with parts of the page switched off */
+  var PH=[['normal',0,0],['no text effects',1,0],['no diagrams',0,1],['neither',1,1]], RES=[], ph=-1, phT=0, acc=null, waitT=0;
+  function setPh(k){ var p=PH[k]; document.documentElement.classList.toggle('dbgfx',!!(p&&p[1])); window.__obNoDraw=!!(p&&p[2]) }
+  var t0=performance.now();
+  setInterval(function(){ var n=performance.now(), dt=(n-t0)/1000; t0=n;
+    var fps=Math.round(fr/dt), loops=Math.round(((window.OBloops||0)-lp0)/dt), js=Math.round(((window.__obJS||0)-js0)/dt/10), lag=lagN?Math.round(lagS/lagN):0, mx=Math.round(lagMax);
+    fr=0; lp0=window.OBloops||0; js0=window.__obJS||0; lagS=lagN=lagMax=0;
     var d={}; try{ d=window.OBdbg?OBdbg():{} }catch(e){}
+    if(ph<0){ waitT++; if(waitT>=5){ ph=0; phT=0; acc={fps:0,loops:0,js:0,lag:0,mx:0,n:0}; setPh(0) } }
+    else if(ph>=0&&ph<PH.length){ phT++; if(phT>1){ acc.fps+=fps; acc.loops+=loops; acc.js+=js; acc.lag+=lag; acc.mx=Math.max(acc.mx,mx); acc.n++ }
+      if(phT>=6){ RES.push(PH[ph][0]+': lag '+Math.round(acc.lag/acc.n)+'ms (max '+acc.mx+') · '+Math.round(acc.fps/acc.n)+' fps · loop '+Math.round(acc.loops/acc.n)+'/s · code '+Math.round(acc.js/acc.n)+'%');
+        ph++; phT=0; acc={fps:0,loops:0,js:0,lag:0,mx:0,n:0}; setPh(ph<PH.length?ph:-1) } }
     var ios=(navigator.userAgent.match(/OS (\d+)_(\d+)/)||[]).slice(1).join('.');
-    b.textContent='engine: '+(window.OBengine?OBengine():'?')+'\nsound: '+(d.ac||'?')+' · playing: '+(d.playing?'yes':'no')+' · pos: '+Math.round(d.pos||0)+
-      '\npage: '+fps+' fps · slowest frame '+Math.round(worst)+' ms · loop '+(((window.OBloops||0)-lp0)|0)+'/s'+(ios?'\niOS '+ios:'')+
-      ((window.__obErr&&__obErr.length)?'\nerrors: '+__obErr.slice(-3).join(' | '):''); worst=0; lp0=window.OBloops||0 },1000) })();
+    var st=ph<0?'self-test starts in '+(5-waitT)+' s — don\'t touch the screen':ph<PH.length?'TESTING ('+PH[ph][0]+') … '+(6-phT)+' s — don\'t touch':'TEST DONE — please send a screenshot';
+    b.textContent='engine: '+(window.OBengine?OBengine():'?')+' · sound: '+(d.ac||'?')+(ios?' · iOS '+ios:'')+
+      '\nnow: lag '+lag+'ms (max '+mx+') · '+fps+' fps · loop '+loops+'/s · code '+js+'%\n'+st+(RES.length?'\n'+RES.join('\n'):'')+
+      ((window.__obErr&&__obErr.length)?'\nerrors: '+__obErr.slice(-3).join(' | '):'') },1000) })();
 </script>
 <script>/* the TAP / DRAG / TURN pictures stop moving while they are off screen */
 (function(){ var el=document.querySelector('.in-pics'); if(!el||!window.IntersectionObserver) return;
   new IntersectionObserver(function(es){ var v=es[0].isIntersecting; el.classList.toggle('off',!v);
     el.querySelectorAll('svg').forEach(function(s){ try{ v?s.unpauseAnimations():s.pauseAnimations() }catch(e){} }) }).observe(el) })();
+</script>
+<script>/* phones: the ink blots on the knobs and levers are drawn once into pictures; turning a knob then only rotates the finished picture instead of re-running the "worn" filter */
+(function(){ if(!document.documentElement.classList.contains('ph')) return;
+  var NS='http://www.w3.org/2000/svg', F=document.getElementById('worn'), S=3; if(!F) return; var FD=F.outerHTML;
+  function one(g){ if(g.__rast) return; var bb; try{ bb=g.getBBox() }catch(e){ return } if(!bb||bb.width<1||bb.height<1) return; g.__rast=1;
+    var pad=Math.max(bb.width,bb.height)*.12+2, x=bb.x-pad, y=bb.y-pad, w=bb.width+pad*2, hh=bb.height+pad*2;
+    var src='<svg xmlns="'+NS+'" width="'+Math.ceil(w*S)+'" height="'+Math.ceil(hh*S)+'" viewBox="'+x+' '+y+' '+w+' '+hh+'"><defs>'+FD+'</defs><g filter="url(#worn)">'+g.innerHTML+'</g></svg>';
+    var url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src), im=new Image();
+    im.onload=function(){ var href=url; try{ var c=document.createElement('canvas'); c.width=Math.ceil(w*S); c.height=Math.ceil(hh*S); c.getContext('2d').drawImage(im,0,0,c.width,c.height); href=c.toDataURL('image/png') }catch(e){}
+      var ie=document.createElementNS(NS,'image'); ie.setAttribute('href',href); ie.setAttribute('x',x); ie.setAttribute('y',y); ie.setAttribute('width',w); ie.setAttribute('height',hh);
+      while(g.firstChild) g.removeChild(g.firstChild); g.appendChild(ie); g.removeAttribute('filter') };
+    im.onerror=function(){ g.__rast=0 }; im.src=url }
+  function all(){ document.querySelectorAll('svg g[filter="url(#worn)"]').forEach(function(g){ if(!g.closest('.deco')) one(g) }) }
+  setTimeout(all,800); setTimeout(all,3000); addEventListener('load',function(){ setTimeout(all,300) }) })();
 </script>
 </body>
 </html>
