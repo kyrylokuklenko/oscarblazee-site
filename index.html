@@ -427,10 +427,10 @@ body.rkopen #rkTab .ar{transform:scaleX(-1)}
 .gsel-r button{font-size:13px!important;padding:6px 8px!important}.gsel-h{font-size:12px!important}
 
 
-.cimg .disc{position:absolute;inset:0;-webkit-mask-image:radial-gradient(closest-side,#000 70%,transparent 100%);mask-image:radial-gradient(closest-side,#000 70%,transparent 100%)}
-.cimg .disc img{-webkit-mask-image:none!important;mask-image:none!important;will-change:transform;animation:discspin 150s linear infinite;backface-visibility:hidden}
-@keyframes discspin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.cimg .disc img{animation:none}}
+
+
+
+@media (prefers-reduced-motion:reduce){}
 
 
 /* page 1 as a layout being worked on: guides, a selection that hops between pieces, and toner that flickers in stop-motion */
@@ -447,7 +447,7 @@ body.rkopen #rkTab .ar{transform:scaleX(-1)}
 
 /* for now: no burning circle, plain white sheet */
 .cover{background:#fff!important}
-.cimg .disc,#cfire{display:none!important}
+#cfire{display:none!important}
 
 
 /* the page 1 type everywhere: heavy grotesque, uppercase where it is a heading, a bit of toner */
@@ -554,7 +554,7 @@ html.fl .cover-in,html.fl #cta{opacity:0}
 (function(){ try{ if((window.matchMedia&&matchMedia('(pointer:coarse)').matches)&&!/[?&]fx=full/.test(location.search)) document.documentElement.classList.add('ph') }catch(e){} })();</script>
 <style>/* phones: once a heading is baked into a picture, its live filter is switched off (the picture already carries the look) */
 html.ph.ph.ph.ph.ph.ph .baked{filter:none!important}</style>
-<style>.in-pics.off *,.in-pics.off{animation-play-state:paused!important}</style>
+<style>.obOff,.obOff *{animation-play-state:paused!important}</style>
 <style>html.dbgfx.dbgfx.dbgfx.dbgfx.dbgfx.dbgfx *{filter:none!important;-webkit-mask-image:none!important;mask-image:none!important;will-change:auto!important}</style>
 </head>
 <body>
@@ -729,7 +729,7 @@ html.ph.ph.ph.ph.ph.ph .baked{filter:none!important}</style>
 </svg>
 
 <header class="cover" id="cover">
-  <div class="cimg" id="cimg"><div class="disc"><img id="cphoto" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="></div><canvas id="cfire" aria-hidden="true"></canvas>
+  <div class="cimg" id="cimg"><canvas id="cfire" aria-hidden="true"></canvas>
   <div class="cover-in">
     <h1 class="cname">Oscar Bla<span class="zz">z<i class="drm" aria-hidden="true"></i><i class="dr" aria-hidden="true"><b style="--x:-.6em;--w:.085em;--l:.42em;--d:30s;--dl:1.5s"></b><b style="--x:-.43em;--w:.05em;--l:.17em;--d:36s;--dl:5s"></b><b style="--x:-.27em;--w:.105em;--l:.88em;--d:55s;--dl:.4s" class="main"></b><b style="--x:-.1em;--w:.06em;--l:.3em;--d:44s;--dl:8s"></b></i></span>ee</h1>
     <nav class="clinks" aria-label="Links">
@@ -2615,6 +2615,23 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
       dia.style.top=(mT+T3)+'px'; dia.style.height=dH+'px';
       seq.style.top=dT+'px'; seq.style.height=dH+'px'; seq.style.left=mL+'px'; seq.style.width=PW+'px';
       mel.style.top=(sT-T3)+'px' })();
+    /* phones: the synth page gets the same gaps as the wave / bass clock / drums page, no empty stretch between its two diagrams */
+    if(SCALE<1) (function(){ var pl=document.getElementById('plots'), pl3=document.getElementById('plots3'), dia=document.getElementById('slDia'), seq=document.getElementById('slSeq'), mel=document.getElementById('slMel');
+      function oy(e){ var y=0; while(e&&e!==w3){ y+=e.offsetTop; e=e.offsetParent } return y }
+      function need(g){ var o=g.style.height; g.style.height='0px'; var n=g.scrollHeight; g.style.height=o; return n }
+      var gap=parseFloat(seq.style.top)-(parseFloat(dia.style.top)+parseFloat(dia.style.height)), bot=Math.max(12,pl.offsetHeight-(parseFloat(seq.style.top)+parseFloat(seq.style.height)));
+      if(!(gap>0)) return;
+      /* the SYNTH / CHOIR tabs sit as close under the top edge as BASS / ACID sit under theirs */
+      var tb=mel.querySelector('.msw'), tabH=(tb&&tb.offsetHeight)||28, tabGap=24; mel.style.top=(tabGap+tabH+8-T3)+'px';
+      var mTop=parseFloat(mel.style.top), mH=parseFloat(mel.style.height), frameBot=mTop+mH-36, xTop=Math.round(frameBot+gap), xH=parseFloat(xs.style.height)||P.x.h+4;
+      xs.style.top=xTop+'px';
+      var py=oy(pl3), yb=py+Math.round((mTop+mH+xTop)/2);
+      gA.style.height=Math.max(yb-oy(gA),need(gA)+6)+'px';
+      /* if the controls beside the synth need more room, the dividing line moves down and the scopes follow it */
+      var lineY=oy(gA)+gA.offsetHeight-py; if(xTop<lineY+tabGap){ xTop=lineY+tabGap; xs.style.top=xTop+'px' }
+      gB.style.height=Math.max(py+xTop+xH+bot-oy(gB),need(gB)+6)+'px';
+      var H=Math.max(oy(gB)+gB.offsetHeight,py+xTop+xH+bot)+12; w3.style.height=H+'px'; w3.style.marginBottom=(H*SCALE-H)+'px';
+      var t0=mTop+T3; vl.style.top=t0+'px'; vl.style.height=(xTop+P.x.h-t0)+'px' })();
     if(window.kpSize) kpSize(); if(window.sqSize) sqSize(); if(window.vocSize) vocSize(); diaSize(); if(window.patchDraw) patchDraw(); if(window.rowsDraw) setTimeout(rowsDraw,0);
   }
   (function(){var pl=document.getElementById('plots3'), vl=document.getElementById('vline3'), down=false;
@@ -3434,10 +3451,13 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
       '\nnow: lag '+lag+'ms (max '+mx+') · '+fps+' fps · loop '+loops+'/s · code '+js+'%\n'+st+(RES.length?'\n'+RES.join('\n'):'')+
       ((window.__obErr&&__obErr.length)?'\nerrors: '+__obErr.slice(-3).join(' | '):'') },1000) })();
 </script>
-<script>/* the TAP / DRAG / TURN pictures stop moving while they are off screen */
-(function(){ var el=document.querySelector('.in-pics'); if(!el||!window.IntersectionObserver) return;
-  new IntersectionObserver(function(es){ var v=es[0].isIntersecting; el.classList.toggle('off',!v);
-    el.querySelectorAll('svg').forEach(function(s){ try{ v?s.unpauseAnimations():s.pauseAnimations() }catch(e){} }) }).observe(el) })();
+<script>/* anything that animates by itself stops while it is off screen, and starts again the moment it comes back:
+   the TAP / DRAG / TURN pictures, the spinning record on page 1, the blinking hints */
+(function(){ if(!window.IntersectionObserver) return;
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){ var v=e.isIntersecting; e.target.classList.toggle('obOff',!v);
+    e.target.querySelectorAll('svg').forEach(function(s){ try{ v?s.unpauseAnimations():s.pauseAnimations() }catch(x){} }) }) },{rootMargin:'60px 0px'});
+  function watch(){ ['.in-pics','.pad-hint'].forEach(function(q){ document.querySelectorAll(q).forEach(function(el){ if(!el.__obw){ el.__obw=1; io.observe(el) } }) }) }
+  watch(); setTimeout(watch,1500); addEventListener('load',watch) })();
 </script>
 <script>/* phones: the ink blots on the knobs and levers are drawn once into pictures; turning a knob then only rotates the finished picture instead of re-running the "worn" filter */
 (function(){ if(!document.documentElement.classList.contains('ph')) return;
