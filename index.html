@@ -1871,7 +1871,9 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     function size(){ var r=cv.getBoundingClientRect(); W=r.width; H=r.height; dp=Math.min(2,devicePixelRatio||1); cv.width=Math.round(W*dp); cv.height=Math.round(H*dp) }
     function take(){ return RX?{pk:RX.pk,n:RX.n,bpm:RX.bpm,bpb:RX.bpb,name:RX.name,live:true}:LAST }
     function fmtT(sec){ var m=Math.floor(sec/60), s2=sec-m*60; return ('0'+m).slice(-2)+':'+('0'+Math.floor(s2)).slice(-2)+'.'+Math.floor((s2%1)*10) }
-    function draw(){ if(!vis) return; requestAnimationFrame(draw); if(!W) size(); var T=take(), sr=AC.sampleRate, bpm=T?T.bpm:curBpm(), bpb=T?T.bpb:((TRACKS[TI]&&TRACKS[TI].bpb)||4), spb=60/bpm, sec=T?T.n/sr:0, beats=sec/spb, bars=beats/bpb;
+    var RECK=''; /* what the panel last showed: when nothing changed, the picture stays as it is */
+    function draw(){ if(!vis) return; requestAnimationFrame(draw); if(!W){ size(); RECK='' } var T=take(), sr=AC.sampleRate, bpm=T?T.bpm:curBpm(), bpb=T?T.bpb:((TRACKS[TI]&&TRACKS[TI].bpb)||4), spb=60/bpm, sec=T?T.n/sr:0, beats=sec/spb, bars=beats/bpb;
+      var rk=[W,H,dp,T?T.n:-1,T&&T.live?1:0,T?T.pk.length:0,recOn?Math.round(performance.now()/60):0,bpm,bpb,TAKE,recMsg,T?T.name:'',document.fonts?document.fonts.status:''].join('|'); if(rk===RECK) return; RECK=rk;
       var HD=W<560?64:120, RU=26, top=RU, lh=H-RU-1, span=Math.max(8,Math.ceil((bars+1.5)/4)*4), px=(W-HD)/span, X=function(b){ return HD+b*px };
       g.setTransform(dp,0,0,dp,0,0); g.clearRect(0,0,W,H); g.fillStyle='#fff'; g.fillRect(0,0,W,H);
       /* ruler */
@@ -2413,7 +2415,8 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
   /* ---------- the beat grid on page 3 ---------- */
   (function(){
     var el=document.getElementById('sq'), c=document.getElementById('sqc'), g=c.getContext('2d'), W=0, H=0, vis=false, paint=null;
-    function size(){var d=(LOWMEM?.75:Math.max(1,Math.min(2,(devicePixelRatio||1)*SCALE))); W=el.clientWidth; H=el.clientHeight; c.width=Math.round(W*d); c.height=Math.round(H*d); g.setTransform(d,0,0,d,0,0)}
+    var SQK=''; /* what the grid last showed: redraw only when a step, a hit or the pattern changes */
+    function size(){var d=(LOWMEM?.75:Math.max(1,Math.min(2,(devicePixelRatio||1)*SCALE))); W=el.clientWidth; H=el.clientHeight; c.width=Math.round(W*d); c.height=Math.round(H*d); g.setTransform(d,0,0,d,0,0); SQK=''}
     window.sqSize=size;
     function geo(){var z=SCALE<1?2:1, lw=Math.min(78*z,W*.15), gx=3*z, gb=11*z, pad=8*z, cw=(W-lw-pad-15*gx-3*(gb-gx))/16, ch=(H-2*pad-(NR-1)*gx)/NR; return {z:z,lw:lw,gx:gx,gb:gb,pad:pad,cw:cw,ch:ch}}
     function cx0(G,k){return G.lw+k*(G.cw+G.gx)+Math.floor(k/4)*(G.gb-G.gx)}
@@ -2426,6 +2429,7 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     function draw(){
       if(!vis) return; var G=geo(), z=G.z, rows=seqRows(), cur=nowStep(), ck=cur>=0?md(Math.floor(cur),16):-1, tnow=AC.currentTime, flash={};
       SEQ.hit.forEach(function(h){ var age=tnow-h.at; if(age>=0&&age<.12&&!!h.b===(SEQ.view==='b')) flash[h.r]=1 });
+      var sk=[W,H,ck,SEQ.view,Object.keys(flash).join(','),rows.join(','),curP().map(function(r){return r.join('')}).join('/'),document.fonts?document.fonts.status:''].join('|'); if(sk===SQK){ requestAnimationFrame(draw); return } SQK=sk;
       g.fillStyle='#fff'; g.fillRect(0,0,W,H);
       g.font=(12*z)+'px "Archivo","Helvetica Neue",Arial,sans-serif'; g.textBaseline='middle'; g.textAlign='left';
       for(var r=0;r<NR;r++){var y=G.pad+r*(G.ch+G.gx); g.fillStyle=flash[r]?'#000':'#666'; g.fillText(rows[r]||'',8*z,y+G.ch/2);
