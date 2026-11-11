@@ -554,6 +554,7 @@ html.fl .cover-in,html.fl #cta{opacity:0}
 (function(){ try{ if((window.matchMedia&&matchMedia('(pointer:coarse)').matches)&&!/[?&]fx=full/.test(location.search)) document.documentElement.classList.add('ph') }catch(e){} })();</script>
 <style>/* phones: each worn-type heading sits in its own layer, so Safari renders its filter once and then only moves the finished picture */
 html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .over .h1,html.ph .over a,html.ph .stamp,html.ph .soft,html.ph .clinks a,html.ph .cover .cta,html.ph .in-lead,html.ph .in-pics figcaption,html.ph .kp-cap>span,html.ph .dia-cap{will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden}</style>
+<style>.in-pics.off *,.in-pics.off{animation-play-state:paused!important}</style>
 </head>
 <body>
 <script>(function(){var h=document.documentElement;h.classList.add('fl');function go(){h.classList.remove('fl')}var t0=Date.now();(function q(){var ok=false;try{document.fonts.forEach(function(f){if(/Archivo/.test(f.family)&&f.status==='loaded')ok=true})}catch(e){ok=true}if(ok||Date.now()-t0>1200)go();else setTimeout(q,40)})()})();</script>
@@ -871,7 +872,7 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
   var rAF=window.requestAnimationFrame.bind(window);
   var PHONE=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
   window.requestAnimationFrame=function(f){ return rAF(function(ts){ if(OBscroll()) setTimeout(function(){ window.requestAnimationFrame(f) },120);
-      else if(PHONE&&f.__t&&ts-f.__t<30) rAF(function(t2){ f.__t=t2; f(t2) });   /* phones: skip every other frame */
+      else if(PHONE&&f.__t&&ts-f.__t<(f.__fast?30:45)) rAF(function(t2){ f.__t=t2; f(t2) });   /* phones: the main loop every other frame, the separate diagrams every third (20 per second) */
       else { f.__t=ts; f(ts) } }) };
 })();
 </script>
@@ -930,8 +931,10 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
 
   /* the masters from "from oscar blazee" play in an AudioWorklet (audio thread, no main-thread hiccups);
      everything else — and the masters too if the worklet can't start — stays on the ScriptProcessor below */
-  var WK={ok:false,node:null,active:false,st:null,pos:NaN,g0:null,g1:null,sid:0,pk:'',last:0,tick:0,why:''};
-  function wkWant(){ var t=WK.ok&&!GEN&&typeof TRACKS!=='undefined'&&TRACKS?TRACKS[TI]:null; return !!(t&&t.own&&t.master) }
+  var WK={ok:false,node:null,active:false,st:null,pos:NaN,g0:null,g1:null,sid:0,pk:'',last:0,tick:0,why:'',bigFor:null,big:false};
+  /* every track plays in the worklet; only a track too big to hold twice in this device's memory stays on the old engine */
+  function wkBig(){ if(WK.bigFor!==ST){ WK.bigFor=ST; var b=0, seen=[]; (ST||[]).forEach(function(a){ [a.L,a.R].forEach(function(x){ if(x&&seen.indexOf(x.buffer)<0){ seen.push(x.buffer); b+=x.byteLength } }) }); WK.big=b>(LOWMEM?150e6:600e6) } return WK.big }
+  function wkWant(){ return !!(WK.ok&&typeof ST!=='undefined'&&!wkBig()) }
   var proc=AC.createScriptProcessor(LOWMEM?8192:4096,2,4); proc.channelCountMode='explicit'; proc.channelInterpretation='discrete';
   var PROCT=0, PRIME0=12, PRIME=PRIME0; proc.onaudioprocess=function(e){ if(wkWant()){ var ob0=e.outputBuffer; for(var c0=0;c0<ob0.numberOfChannels;c0++) ob0.getChannelData(c0).fill(0); return } PROCT=performance.now(); var ob=e.outputBuffer, ib=e.inputBuffer, p0=pos; RAN=false; render(ob.getChannelData(0),ob.getChannelData(1),0,ib.getChannelData(0),ib.numberOfChannels>1?ib.getChannelData(1):null,ob.numberOfChannels>3?ob.getChannelData(2):null,ob.numberOfChannels>3?ob.getChannelData(3):null);
     if(RAN){ CLK.pos=p0; CLK.spd=K.spd; CLK.t=e.playbackTime>0?e.playbackTime:AC.currentTime+ob.length/AC.sampleRate; CLK.ok=true } else CLK.ok=false };
@@ -1035,7 +1038,7 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     var WKN=192, WREF=new Float32Array(WKN);
     var SR=sampleRate, LEN=0, LOOP=Infinity, ST=[], SG=[], SGT=[], pos=0, gain=0, gr=[{s:0,a:0},{s:0,a:G/2}];
     var lp=0, crack=0, fl1=0, fl2=0, fr1=0, fr2=0;
-    var K={vol:1,spd:1,pit:1,noi:0,flt:1}, F={on:false,soundOn:false,playing:false,started:false,ready:false,prime:false,tap:false,pure:true,trim:1};
+    var K={vol:1,spd:1,pit:1,noi:0,flt:1}, F={on:false,soundOn:false,playing:false,started:false,ready:false,prime:false,tap:false,pure:true,trim:1,gen:false}, HEAD=0;
     var STUT={on:false,start:0,len:4410};
     var PORT=null, sid=0, nb=0, RAN=false, lpp=null, CLK={pos:0,t:0,spd:1,ok:false}, rq=0, qL=new Float32Array(4096), qR=new Float32Array(4096);
     function monoAt(ix){ ix=ix%LEN; if(ix<0) ix+=LEN; ix=ix|0; var v=0; for(var s=0;s<ST.length;s++){var A=ST[s]; v+=(A.L[ix]+A.R[ix])*(A.k||1)*SG[s]} return v }
@@ -1048,8 +1051,8 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
       return best }
     function push(l,r){ if(rq<qL.length){ qL[rq]=l; qR[rq]=r; rq++ } }
     function render(L,R,n,INP,CLN,EL,ER){
-      var ns=ST.length, PVW=!F.started;
-      if(!F.ready||!LEN||!ns||(!F.playing&&!(PVW&&F.prime))){for(var z=0;z<n;z++){var c0=CLN?CLN[z]:0; L[z]=R[z]=c0; if(EL){EL[z]=ER[z]=0}} return}
+      var ns=ST.length, PVW=!F.started, stall=F.gen&&(pos+n*K.spd*2+G*2>HEAD);
+      if(!F.ready||!LEN||(!F.playing&&!(PVW&&F.prime))||stall){for(var z=0;z<n;z++){var c0=CLN?CLN[z]:0; L[z]=R[z]=c0; if(EL){EL[z]=ER[z]=0}} return}
       RAN=true; var pure=F.pure, rr=SR/sampleRate, sp=K.spd*rr, pr=K.pit*rr, shift=Math.abs(K.pit-1)>1e-4||Math.abs(K.spd-1)>1e-4, gt=F.soundOn?K.vol*F.trim:0, nz=K.noi;
       var fc=110*Math.pow(160,K.flt), fa=1-Math.exp(-2*Math.PI*Math.min(fc,sampleRate*.45)/sampleRate), bypass=K.flt>.985;
       for(var i=0;i<n;i++){
@@ -1076,10 +1079,14 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     }
     function take(d){
       if('on' in d){ F.on=!!d.on; rq=0; nb=0 }
-      if('st' in d){ if(d.st){ ST=d.st; SR=d.sr; LEN=d.len; SG=d.sg } else { ST=[]; SG=[]; LEN=0 } }
+      if('st' in d){ if(d.st){ ST=d.st; SR=d.sr; LEN=d.len; SG=d.sg } else { ST=[]; SG=d.sg||[] } }
+      /* the generator: a fresh ring of empty parts, then each newly composed stretch, or a stretch wiped for recomposing */
+      if(d.gnew){ LEN=d.gnew.len; ST=[]; for(var a=0;a<d.gnew.n;a++) ST.push({L:new Float32Array(LEN),R:new Float32Array(LEN),k:1}); SG=d.sg||SG }
+      if(d.gs){ var g0=d.gs, A0=g0.a; for(var s=0;s<ST.length&&2*s+1<g0.d.length;s++){ var DL=g0.d[2*s], DR=g0.d[2*s+1], TL=ST[s].L, TR=ST[s].R; for(var j=0;j<DL.length;j++){ var ix=(A0+j)%LEN; TL[ix]=DL[j]; TR[ix]=DR[j] } } }
+      if(d.gz){ for(var s3=0;s3<ST.length;s3++){ var ZL=ST[s3].L, ZR=ST[s3].R; for(var z=0;z<d.gz.n;z++){ var iz=(d.gz.a+z)%LEN; ZL[iz]=0; ZR[iz]=0 } } }
       if('seek' in d){ pos=d.seek; sid=d.sid; gr=d.gr }
       if(d.p){ var p=d.p; K.vol=p[0]; K.spd=p[1]; K.pit=p[2]; K.noi=p[3]; K.flt=p[4]; F.soundOn=!!p[5]; F.playing=!!p[6]; F.started=!!p[7]; F.ready=!!p[8]; F.prime=!!p[9]; F.tap=!!p[10];
-        F.pure=!!p[11]; F.trim=p[12]; STUT.on=!!p[13]; STUT.start=p[14]; STUT.len=p[15]; LOOP=p[16]; SGT=p.slice(17) } }
+        F.pure=!!p[11]; F.trim=p[12]; STUT.on=!!p[13]; STUT.start=p[14]; STUT.len=p[15]; LOOP=p[16]; LEN=p[17]; SR=p[18]; F.gen=!!p[19]; HEAD=p[20]; SGT=p.slice(21) } }
     function report(){ var m={sid:sid,pos:pos,lpp:lpp,gain:gain,sg:SG.slice(),clk:{pos:CLK.pos,t:CLK.t,spd:CLK.spd,ok:CLK.ok}};
       if(rq){ m.rl=qL.slice(0,rq); m.rr=qR.slice(0,rq); rq=0 } lpp=null; PORT.postMessage(m) }
     class OBMaster extends AudioWorkletProcessor{
@@ -1104,14 +1111,20 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     pos=d.pos; WK.pos=pos; gain=d.gain; if(d.sg&&d.sg.length===SG.length) for(var s=0;s<SG.length;s++) SG[s]=d.sg[s];
     if(d.lpp!==null){ lastProcPos=d.lpp; lastProcPerf=now }
     var c=d.clk; if(c.ok){ CLK.pos=c.pos; CLK.spd=c.spd; CLK.t=c.t; CLK.ok=true } else CLK.ok=false }
+  /* a stretch of the generator's parts, copied for the worklet (the ring wraps at LEN) */
+  function wkSlice(a,n){ var d=[]; n=Math.min(n,LEN); for(var s=0;s<ST.length;s++){ var L=new Float32Array(n), R=new Float32Array(n), SL=ST[s].L, SR2=ST[s].R; for(var j=0;j<n;j++){ var ix=(a+j)%LEN; L[j]=SL[ix]; R[j]=SR2[ix] } d.push(L,R) } return {a:a%LEN,d:d} }
+  function wkGenPut(a,n){ wkSync(); if(!WK.active||!WK.node||WK.st!==ST) return; try{ WK.node.port.postMessage({gs:wkSlice(a,n)}) }catch(e){} }
+  function wkGenWipe(a,n){ wkSync(); if(!WK.active||!WK.node||WK.st!==ST) return; try{ WK.node.port.postMessage({gz:{a:a%LEN,n:n}}) }catch(e){} }
   function wkSync(){ if(!WK.node) return; var now=performance.now(), on=wkWant(), m={}, any=false;
     if(now-WK.tick>250) WK.last=Math.max(WK.last,now); WK.tick=now; /* timers were held back (tab in background): don't count that as silence */
     if(on!==WK.active){ WK.active=on; m.on=on; any=true; WK.pk=''; WK.last=now;
       if(on){ WK.st=undefined; WK.pos=NaN } else { m.st=null; WK.st=null } }
     if(on){
-      if(ST!==WK.st){ WK.st=ST; any=true; if(ST&&ST.length){ m.st=ST.map(function(a){return {L:a.L,R:a.R,k:a.k||1}}); m.sr=SR; m.len=LEN; m.sg=SG.slice() } else m.st=null }
+      if(ST!==WK.st){ WK.st=ST; any=true; m.sg=SG.slice();
+        if(GEN&&ST&&ST.length){ m.gnew={len:LEN,n:ST.length}; var upto=Math.min(LEN,Math.max(0,head+(TAIL||0))); if(head+(TAIL||0)>=LEN) upto=LEN; if(upto>0) m.gs=wkSlice(0,upto) }
+        else if(ST&&ST.length){ m.st=ST.map(function(a){return {L:a.L,R:a.R,k:a.k||1}}); m.sr=SR; m.len=LEN } else m.st=null }
       if(pos!==WK.pos||gr[0]!==WK.g0||gr[1]!==WK.g1){ WK.sid++; any=true; m.seek=pos; m.sid=WK.sid; m.gr=[{s:gr[0].s,a:gr[0].a},{s:gr[1].s,a:gr[1].a}]; WK.pos=pos; WK.g0=gr[0]; WK.g1=gr[1] }
-      var t=TRACKS[TI]||{}, p=[K.vol,K.spd,K.pit,K.noi,K.flt,soundOn?1:0,playing?1:0,started?1:0,ready?1:0,PRIME>0?1:0,TAPON?1:0,t.user?1:0,t.trim||1,STUT.on?1:0,STUT.start,STUT.len,LOOP].concat(SGT), pk=p.join(',');
+      var t=TRACKS[TI]||{}, p=[K.vol,K.spd,K.pit,K.noi,K.flt,soundOn?1:0,playing?1:0,started?1:0,ready?1:0,PRIME>0?1:0,TAPON?1:0,(!GEN&&t.user)?1:0,t.trim||1,STUT.on?1:0,STUT.start,STUT.len,LOOP,LEN,SR,GEN?1:0,head].concat(SGT), pk=p.join(',');
       if(pk!==WK.pk){ WK.pk=pk; m.p=p; any=true }
       /* safety net: if the worklet goes quiet while it should be playing, hand the song back to the old engine */
       if(playing&&AC.state==='running'&&!document.hidden&&now-WK.last>2500){ wkDrop('worklet went silent'); return }
@@ -1131,7 +1144,7 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     function tryAt(i){ if(i>=urls.length){ WK.why='worklet module would not load'; return }
       var p; try{ p=aw.addModule(urls[i]) }catch(e){ return tryAt(i+1) } p.then(make,function(){ tryAt(i+1) }) }
     tryAt(0) })();
-  window.OBengine=function(){ return WK.active?'audioworklet':WK.ok?'audioworklet ready (plays the masters)':'scriptprocessor'+(WK.why?' — '+WK.why:'') };
+  window.OBengine=function(){ return WK.active?'audioworklet':WK.ok?(WK.big?'scriptprocessor — this track is too big to hold twice':'audioworklet (starting)'):'scriptprocessor'+(WK.why?' — '+WK.why:'') };
   var dry=AC.createGain(); mixOut.connect(dry); dry.connect(masterOut);
   var irb=AC.createBuffer(2,AC.sampleRate*3.6,AC.sampleRate); for(var c=0;c<2;c++){var dd=irb.getChannelData(c);for(var j=0;j<dd.length;j++)dd[j]=(Math.random()*2-1)*Math.pow(1-j/dd.length,3.2)}
   var conv=AC.createConvolver(); conv.buffer=irb; var wet=AC.createGain(); wet.gain.value=0; mixOut.connect(conv); conv.connect(wet); wet.connect(masterOut);
@@ -1658,6 +1671,7 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     genToken++; rendering=false;
     var h=Math.ceil(pos)+Math.round(SR*.05), keep=Math.round(SR*6);
     for(var s=0;s<ST.length;s++){var L=ST[s].L, Rr=ST[s].R; for(var z=0;z<LEN-keep;z++){var ix=(h+z)%LEN; L[ix]=0; Rr[ix]=0}}
+    wkGenWipe(h,LEN-keep);
     if(sectionAt.length&&chunkN>0){var back=0; for(var k=sectionAt.length-1;k>=0&&sectionAt[k].at>h;k--)back++; chunkN=Math.max(0,chunkN-back); sectionAt.length=sectionAt.length-back}
     head=h; barOrigin=h; pump();
   }
@@ -1666,11 +1680,13 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
   function setKey(note){var t=TRACKS[TI], d=((note-t.root)%12+12)%12; if(d>6)d-=12; if(d===KEYT)return; KEYT=d; wake(); regen(); syncKeys(); syncMore()}
   var lastCH=0, barOrigin=0;
   function writeChunk(b){
+    if(typeof wkSync==='function') wkSync(); var h0=head;
     var CH=b.length-TAIL;
     for(var s=0;s<4;s++){var L=ST[s].L, Rr=ST[s].R, cl=b.getChannelData(s*2), cr=b.getChannelData(s*2+1);
       for(var z=TAIL;z<CH+TAIL;z++){var ix=(head+z)%LEN; L[ix]=0; Rr[ix]=0}
       for(var j=0;j<b.length;j++){var ix2=(head+j)%LEN; L[ix2]+=cl[j]; Rr[ix2]+=cr[j]}}
     head+=CH;
+    wkGenPut(h0,b.length); /* hand the new stretch to the worklet */
   }
   var failN=0;
   function pump(){
@@ -3001,7 +3017,7 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     try{pump()}catch(e){rendering=false} try{simulate()}catch(e){} try{fxUpdate()}catch(e){} try{ tapPoll(); if(p2vis||p3x) livePoll() }catch(e){} fr2=!fr2; FR3=(FR3+1)%3; var prim=!started&&ready&&PRIME>0&&PRIMEOK&&lastProcPos!==PRLP&&PRIMEF<40; if(prim){ var sv=[p2vis,p3m,p3x]; p2vis=p3m=p3x=true; try{draw()}catch(e){} p2vis=sv[0]; p3m=sv[1]; p3x=sv[2]; PRLP=lastProcPos; PRIME--; PRIMEF++; return }
     if(!started&&PRIME<=0) return; /* frozen preview: the canvases keep their last picture */
     if((p2vis||p3m||p3x)&&(LOWMEM?FR3===0:(DRT<7||fr2))){ var t0=performance.now(); try{draw()}catch(e){} DRT=DRT*.92+(performance.now()-t0)*.08 } }
-  var RAFT=0; (function loop(){ requestAnimationFrame(loop); RAFT=performance.now(); loopBody() })();
+  var RAFT=0; (function(){ var f=function loop(){ requestAnimationFrame(f); RAFT=performance.now(); loopBody() }; f.__fast=true; f() })();
   /* some embedded browsers hold back animation frames until the first tap: keep drawing anyway */
   /* iPhone Safari sometimes stops animation frames altogether: then a timer drives the pictures and the music generator instead */
   var FBNEXT=0; setInterval(function(){ var n=performance.now(); if(document.hidden||n<FBNEXT) return; if(!started?n-LOOPT>220:n-RAFT>220){ loopBody(); var t1=performance.now(); FBNEXT=t1+Math.max(33,(t1-n)*2) /* always leave the phone at least half its time for taps */ } },33);
@@ -3384,6 +3400,11 @@ html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .
     b.textContent='engine: '+(window.OBengine?OBengine():'?')+'\nsound: '+(d.ac||'?')+' · playing: '+(d.playing?'yes':'no')+' · pos: '+Math.round(d.pos||0)+
       '\npage: '+fps+' fps · slowest frame '+Math.round(worst)+' ms · loop '+(((window.OBloops||0)-lp0)|0)+'/s'+(ios?'\niOS '+ios:'')+
       ((window.__obErr&&__obErr.length)?'\nerrors: '+__obErr.slice(-3).join(' | '):''); worst=0; lp0=window.OBloops||0 },1000) })();
+</script>
+<script>/* the TAP / DRAG / TURN pictures stop moving while they are off screen */
+(function(){ var el=document.querySelector('.in-pics'); if(!el||!window.IntersectionObserver) return;
+  new IntersectionObserver(function(es){ var v=es[0].isIntersecting; el.classList.toggle('off',!v);
+    el.querySelectorAll('svg').forEach(function(s){ try{ v?s.unpauseAnimations():s.pauseAnimations() }catch(e){} }) }).observe(el) })();
 </script>
 </body>
 </html>
