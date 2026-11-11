@@ -550,9 +550,10 @@ html:not(.scaled) #g3a>.grp-h,html:not(.scaled) #g3b>.grp-h{padding-left:6px}
 html.fl .cover-in,html.fl #cta{opacity:0}
 .cover-in,#cta{transition:opacity .3s}
 </style>
-<script>/* phones: Safari draws the SVG "photocopier" text filters on the main processor and repaints them constantly — switch them off there */
+<script>/* phones: mark the page so the worn-type headings get their own layers (see the style below) */
 (function(){ try{ if((window.matchMedia&&matchMedia('(pointer:coarse)').matches)&&!/[?&]fx=full/.test(location.search)) document.documentElement.classList.add('ph') }catch(e){} })();</script>
-<style>html.ph.ph.ph.ph.ph *,html.ph.ph.ph.ph.ph *::before,html.ph.ph.ph.ph.ph *::after{filter:none!important}</style>
+<style>/* phones: each worn-type heading sits in its own layer, so Safari renders its filter once and then only moves the finished picture */
+html.ph .tr-row .nm,html.ph .tr-row .meta,html.ph .tr-h,html.ph .cname,html.ph .over .h1,html.ph .over a,html.ph .stamp,html.ph .soft,html.ph .clinks a,html.ph .cover .cta,html.ph .in-lead,html.ph .in-pics figcaption,html.ph .kp-cap>span,html.ph .dia-cap{will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden}</style>
 </head>
 <body>
 <script>(function(){var h=document.documentElement;h.classList.add('fl');function go(){h.classList.remove('fl')}var t0=Date.now();(function q(){var ok=false;try{document.fonts.forEach(function(f){if(/Archivo/.test(f.family)&&f.status==='loaded')ok=true})}catch(e){ok=true}if(ok||Date.now()-t0>1200)go();else setTimeout(q,40)})()})();</script>
