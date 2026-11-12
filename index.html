@@ -1759,7 +1759,7 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
     fetch(CONFIG.track).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer()}).then(function(ab){decode(ab,CONFIG.track)})
       .catch(function(){loadFailed=true;status='track not found — click to choose an audio file, or drop one here'});
   } else startGenerator();
-  document.getElementById('zeroBtn').addEventListener('click',function(){ wake(); useBlank() });
+  document.getElementById('zeroBtn').addEventListener('click',function(){ unpause(); wake(); useBlank() });
   var pick=document.getElementById('pick'); document.getElementById('upBtn').addEventListener('click',function(){pick.click()});
   pick.addEventListener('change',function(){var f=pick.files[0]; if(f) loadMine(f); pick.value=''});
   addEventListener('dragover',function(e){e.preventDefault()});
@@ -1774,15 +1774,17 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
   function silentWav(){ var sr=8000, n=sr/2, b=new ArrayBuffer(44+n*2), v=new DataView(b); function w(o,t){ for(var i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)) }
     w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
     return URL.createObjectURL(new Blob([b],{type:'audio/wav'})) }
-  function unlockAudio(e){ if(window.OBpaused){ var tg=e&&e.target; if(tg&&tg.closest&&tg.closest('.win,#tracks5,#cta')) unpause(); else return }
+  function unlockAudio(e){ var PZ=!!window.OBpaused; /* while paused a tap only prepares iPhone audio; the music itself waits for a track to be picked */
     try{ if(navigator.audioSession) navigator.audioSession.type='playback' }catch(e){}
     try{ if(!SIL){ SIL=document.createElement('audio'); SIL.setAttribute('playsinline',''); SIL.setAttribute('webkit-playsinline',''); SIL.loop=true; SIL.preload='auto'; SIL.src=silentWav(); SIL.volume=1; SIL.style.display='none'; document.body.appendChild(SIL) }
       if(SIL.paused){ var pr=SIL.play(); if(pr&&pr.catch) pr.catch(function(){}) } }catch(e){}
+    if(PZ) return;
     try{ if(AC.state!=='running') AC.resume() }catch(e){}
     if(!started) wake() }
   ['pointerdown','touchstart','touchend','click','keydown'].forEach(function(ev){ document.addEventListener(ev,unlockAudio,{capture:true,passive:true}) });
-  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&started){ try{ if(AC.state!=='running') AC.resume() }catch(e){} if(SIL&&SIL.paused){ var pr=SIL.play(); if(pr&&pr.catch) pr.catch(function(){}) } } });
-  window.OBpaused=false; function pauseAll(){ window.OBpaused=true; try{ AC.suspend() }catch(e){} syncTracks() } function unpause(){ if(!window.OBpaused) return; window.OBpaused=false; try{ AC.resume() }catch(e){} }
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&started&&!window.OBpaused){ try{ if(AC.state!=='running') AC.resume() }catch(e){} if(SIL&&SIL.paused){ var pr=SIL.play(); if(pr&&pr.catch) pr.catch(function(){}) } } });
+  /* no music until the visitor picks something on page 2 (a track, "play it →" or "start →"): the site opens paused */
+  window.OBpaused=true; try{ AC.suspend() }catch(e){} function pauseAll(){ window.OBpaused=true; try{ AC.suspend() }catch(e){} syncTracks() } function unpause(){ if(!window.OBpaused) return; window.OBpaused=false; try{ AC.resume() }catch(e){} }
   function wake(){ if(window.OBpaused) return; if(AC.state!=='running') AC.resume(); if(!started){ started=true; startedAt=performance.now(); playing=true; ui() } }
   ['pointerdown','pointerup','keydown','touchend','click'].forEach(function(ev){ addEventListener(ev,function(e){
     wake() },{passive:true}) });
@@ -2072,7 +2074,7 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
   var an=AC.createAnalyser(); an.fftSize=1024; an.smoothingTimeConstant=.78; finalOut.connect(an);
   var LV={loud:1,choir:1,glide:.35,space:.45,hold:false,low:false}, LABEV=[]; labF.frequency.value=9000;
   var NZ=AC.createBuffer(1,AC.sampleRate,AC.sampleRate); (function(){var d=NZ.getChannelData(0); for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1})();
-  window.OBfire=function(dur,amt){ try{ if(AC.state!=='running') AC.resume(); var t=AC.currentTime+.02, out=AC.createGain(); out.gain.value=.55*amt; out.connect(AC.destination);
+  window.OBfire=function(dur,amt){ if(window.OBpaused) return; try{ if(AC.state!=='running') AC.resume(); var t=AC.currentTime+.02, out=AC.createGain(); out.gain.value=.55*amt; out.connect(AC.destination);
     function noise(t0,len){ var b=AC.createBufferSource(); b.buffer=NZ; b.loop=true; b.start(t0,Math.random()*.5); b.stop(t0+len); return b }
     var n=noise(t,dur+.8), bp=AC.createBiquadFilter(), g=AC.createGain(); bp.type='bandpass'; bp.Q.value=.6; bp.frequency.setValueAtTime(260,t); bp.frequency.exponentialRampToValueAtTime(1500,t+dur*.35); bp.frequency.exponentialRampToValueAtTime(420,t+dur);
     g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.5,t+.1); g.gain.setTargetAtTime(0,t+dur*.4,dur*.28); n.connect(bp); bp.connect(g); g.connect(out);
@@ -3034,11 +3036,11 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
   /* listen first, then go: every track in the lists gets its own way down to the synth */
   [subEnd,subOwn].forEach(function(list){ [].slice.call(list.children).forEach(function(li){ var row=li.querySelector('.tr-row'); if(!row||row.disabled) return; var go=document.createElement('button'); go.type='button'; go.className='in-go'; go.textContent='play it \u2192';
     go.addEventListener('click',function(){ var cur=row.getAttribute('aria-current')==='true'; unpause(); syncTracks(); if(!cur) row.click(); setTimeout(function(){ winEl.scrollIntoView({behavior:'smooth'}) },cur?0:250) }); li.appendChild(go) }) });
-  document.getElementById('modeZero').addEventListener('click',function(){ wake(); useBlank(); syncTracks(); winEl.scrollIntoView({behavior:'smooth'}) });
+  document.getElementById('modeZero').addEventListener('click',function(){ unpause(); wake(); useBlank(); syncTracks(); winEl.scrollIntoView({behavior:'smooth'}) });
   var trList=document.getElementById('trList');
   function addRow(i){var t=TRACKS[i], li=document.createElement('li'), b=document.createElement('button'); b.type='button'; b.className='tr-row';
     b.innerHTML='<span class="nm">'+t.name+'</span><span class="st"></span><span class="meta">'+(t.user?t.file:NOTES[t.root]+(t.mode?' '+t.mode:'')+' · '+t.bpm+' bpm · '+t.meter)+'</span>';
-    b.addEventListener('click',function(){ wake(); setTrack(i); syncTracks(); winEl.scrollIntoView({behavior:'smooth'}) }); li.appendChild(b); trList.appendChild(li)}
+    b.addEventListener('click',function(){ unpause(); wake(); setTrack(i); syncTracks(); winEl.scrollIntoView({behavior:'smooth'}) }); li.appendChild(b); trList.appendChild(li)}
   TRACKS.forEach(function(t,i){addRow(i)});
   function syncTracks(){ document.documentElement.classList.toggle('ownmaster',!!(TRACKS[TI]&&TRACKS[TI].master)); var mz=document.getElementById('modeZero'), me=document.getElementById('modeEnd'), tt=TRACKS[TI];
     if(mz&&me){ var mo=document.getElementById('modeOwn'), zO=!!(tt&&tt.blank), oO=!!(tt&&started&&OWN.some(function(o){return o.ti===TI})), eO=!!(tt&&started&&!tt.blank&&!tt.user&&!oO);
