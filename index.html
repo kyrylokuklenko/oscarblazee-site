@@ -558,7 +558,10 @@ html.fl .cover-in,html.fl #cta{opacity:0}
   try{ document.fonts.ready.then(function(){ __obMark('fonts') }) }catch(e){}
   var last=performance.now(); window.__obStall={ms:0,at:0}; (function t(){ var n=performance.now(), d=n-last-50; if(d>__obStall.ms&&n<30000){ __obStall.ms=d; __obStall.at=last } last=n; if(n<30000) setTimeout(t,50) })() })();</script>
 <style>/* phones: once a heading is baked into a picture, its live filter is switched off (the picture already carries the look) */
-html.ph.ph.ph.ph.ph.ph .baked{filter:none!important}</style>
+html.ph.ph.ph.ph.ph.ph .baked{filter:none!important}
+/* phones: no live filters or letter masks anywhere — measured on an iPhone, this alone took the page's delay from ~1.3 s to ~25 ms.
+   The big headings keep their worn look, it is already burnt into their pictures. */
+html.ph.ph.ph.ph.ph.ph.ph *{filter:none!important;-webkit-mask-image:none!important;mask-image:none!important;will-change:auto!important}</style>
 <style>.obOff,.obOff *{animation-play-state:paused!important}</style>
 <style>html.dbgfx.dbgfx.dbgfx.dbgfx.dbgfx.dbgfx *{filter:none!important;-webkit-mask-image:none!important;mask-image:none!important;will-change:auto!important}</style>
 </head>
@@ -3481,7 +3484,7 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
   watch(); setTimeout(watch,1500); addEventListener('load',watch) })();
 </script>
 <script>/* phones: the ink blots on the knobs and levers are drawn once into pictures; turning a knob then only rotates the finished picture instead of re-running the "worn" filter */
-(function(){ if(!document.documentElement.classList.contains('ph')) return;
+(function(){ return; /* switched off: on an iPhone this took ~30 s; phones now simply drop the live filters (see the style in the head) */
   var NS='http://www.w3.org/2000/svg', F=document.getElementById('worn'), S=3; if(!F) return; var FD=F.outerHTML;
   function one(g){ if(g.__rast) return; var bb; try{ bb=g.getBBox() }catch(e){ return } if(!bb||bb.width<1||bb.height<1) return; g.__rast=1;
     var pad=Math.max(bb.width,bb.height)*.12+2, x=bb.x-pad, y=bb.y-pad, w=bb.width+pad*2, hh=bb.height+pad*2;
