@@ -551,7 +551,11 @@ html.fl .cover-in,html.fl #cta{opacity:0}
 .cover-in,#cta{transition:opacity .3s}
 </style>
 <script>/* phones: mark the page, so the worn type is baked into pictures once and never re-filtered live (see below) */
-(function(){ try{ if((window.matchMedia&&matchMedia('(pointer:coarse)').matches)&&!/[?&]fx=full/.test(location.search)) document.documentElement.classList.add('ph') }catch(e){} })();</script>
+(function(){ try{ if((window.matchMedia&&matchMedia('(pointer:coarse)').matches)&&!/[?&]fx=full/.test(location.search)) document.documentElement.classList.add('ph') }catch(e){} })();
+/* phones: the scopes panel (L/R, X–Y, pulse, parts, waterfall) is switched off — the heaviest picture on the page.
+   To bring it back: delete the next line, or open the site with ?scopes */
+(function(){ try{ if(document.documentElement.classList.contains('ph')&&!/[?&]scopes/.test(location.search)) document.documentElement.classList.add('noscopes') }catch(e){} })();</script>
+<style>html.noscopes #slXY,html.noscopes #g3b{display:none!important}</style>
 <script>/* startup timeline for ?debug: when each part of the page became ready, and the longest freeze while loading */
 (function(){ var M={}; window.__obM=M; window.__obMark=function(k){ if(!(k in M)) M[k]=performance.now() };
   document.addEventListener('DOMContentLoaded',function(){ __obMark('page') }); addEventListener('load',function(){ __obMark('loaded') });
@@ -2658,13 +2662,14 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
       /* the SYNTH / CHOIR tabs sit as close under the top edge as BASS / ACID sit under theirs */
       var tb=mel.querySelector('.msw'), tabH=(tb&&tb.offsetHeight)||28, tabGap=24; mel.style.top=(tabGap+tabH+8-T3)+'px';
       var mTop=parseFloat(mel.style.top), mH=parseFloat(mel.style.height), frameBot=mTop+mH-36, xTop=Math.round(frameBot+gap), xH=parseFloat(xs.style.height)||P.x.h+4;
+      var NOS=document.documentElement.classList.contains('noscopes'); if(NOS){ xH=0; xTop=Math.round(mTop+mH) }
       xs.style.top=xTop+'px';
       var py=oy(pl3), yb=py+Math.round((mTop+mH+xTop)/2);
       gA.style.height=Math.max(yb-oy(gA),need(gA)+6)+'px';
       /* if the controls beside the synth need more room, the dividing line moves down and the scopes follow it */
       var lineY=oy(gA)+gA.offsetHeight-py; if(xTop<lineY+tabGap){ xTop=lineY+tabGap; xs.style.top=xTop+'px' }
-      gB.style.height=Math.max(py+xTop+xH+bot-oy(gB),need(gB)+6)+'px';
-      var H=Math.max(oy(gB)+gB.offsetHeight,py+xTop+xH+bot)+12; w3.style.height=H+'px'; w3.style.marginBottom=(H*SCALE-H)+'px';
+      if(NOS){ gA.style.height=Math.max(py+mTop+mH+bot-oy(gA),need(gA)+6)+'px' } else gB.style.height=Math.max(py+xTop+xH+bot-oy(gB),need(gB)+6)+'px';
+      var H=NOS?Math.max(oy(gA)+gA.offsetHeight,py+mTop+mH+bot)+12:Math.max(oy(gB)+gB.offsetHeight,py+xTop+xH+bot)+12; w3.style.height=H+'px'; w3.style.marginBottom=(H*SCALE-H)+'px';
       var t0=mTop+T3; vl.style.top=t0+'px'; vl.style.height=(xTop+P.x.h-t0)+'px' })();
     if(window.kpSize) kpSize(); if(window.sqSize) sqSize(); if(window.vocSize) vocSize(); diaSize(); if(window.patchDraw) patchDraw(); if(window.rowsDraw) setTimeout(rowsDraw,0);
   }
@@ -3072,7 +3077,7 @@ if(/[?&]debug/.test(location.search)){ window.__obJS=0;
   window.OBdbg=function(){ return {started:started,PRIME:PRIME,ready:ready,playing:playing,ac:AC.state,pos:lastProcPos} };
   var LOOPT=0, PRIMEF=0, PRLP=-1, PRIMEOK=false, FR3=0;
   if('IntersectionObserver' in window) new IntersectionObserver(function(es){ if(es.some(function(e){return e.isIntersecting})) PRIMEOK=true },{rootMargin:'35% 0px 35% 0px'}).observe(winEl); else PRIMEOK=true; function loopBody(){ LOOPT=performance.now(); window.OBloops=(window.OBloops||0)+1; if(window.OBscroll&&OBscroll()){ try{pump()}catch(e){rendering=false} return } var lpA=lastProcPos;
-    try{pump()}catch(e){rendering=false} try{simulate()}catch(e){} try{fxUpdate()}catch(e){} try{ tapPoll(); if(p2vis||p3x) livePoll() }catch(e){} fr2=!fr2; FR3=(FR3+1)%3; var prim=!started&&ready&&PRIME>0&&PRIMEOK&&lastProcPos!==PRLP&&PRIMEF<40; if(prim){ var sv=[p2vis,p3m,p3x]; p2vis=p3m=p3x=true; try{draw()}catch(e){} p2vis=sv[0]; p3m=sv[1]; p3x=sv[2]; PRLP=lastProcPos; PRIME--; PRIMEF++; return }
+    try{pump()}catch(e){rendering=false} try{simulate()}catch(e){} try{fxUpdate()}catch(e){} try{ tapPoll(); if(p2vis||p3x) livePoll() }catch(e){} fr2=!fr2; FR3=(FR3+1)%3; var prim=!started&&ready&&PRIME>0&&PRIMEOK&&lastProcPos!==PRLP&&PRIMEF<40; if(prim){ var sv=[p2vis,p3m,p3x]; p2vis=p3m=true; p3x=!document.documentElement.classList.contains('noscopes'); try{draw()}catch(e){} p2vis=sv[0]; p3m=sv[1]; p3x=sv[2]; PRLP=lastProcPos; PRIME--; PRIMEF++; return }
     if(!started&&PRIME<=0) return; /* frozen preview: the canvases keep their last picture */
     if((p2vis||p3m||p3x)&&!window.__obNoDraw&&(LOWMEM?(DRT<14?(fr2||window.__obFI>=25):FR3===0):(DRT<7||fr2))){ /* phones: 15 pictures a second, back to 10 if drawing gets slow */ var t0=performance.now(); try{draw()}catch(e){} DRT=DRT*.92+(performance.now()-t0)*.08 } }
   var RAFT=0; (function(){ var f=function loop(){ requestAnimationFrame(f); RAFT=performance.now(); loopBody() }; f.__fast=true; f() })();
